@@ -448,21 +448,8 @@ CMakeFiles/OpenGL_Project.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/11/cstring \
   /usr/include/string.h \
   /usr/include/strings.h \
-  /usr/include/glm/gtc/type_ptr.inl \
-  ../include/stb_image.h \
-  /usr/include/c++/11/stdlib.h \
-  /usr/include/c++/11/math.h \
-  /usr/lib/gcc/x86_64-linux-gnu/11/include/emmintrin.h \
-  /usr/lib/gcc/x86_64-linux-gnu/11/include/xmmintrin.h \
-  /usr/lib/gcc/x86_64-linux-gnu/11/include/mmintrin.h \
-  /usr/lib/gcc/x86_64-linux-gnu/11/include/mm_malloc.h
+  /usr/include/glm/gtc/type_ptr.inl
 
-
-/usr/lib/gcc/x86_64-linux-gnu/11/include/mmintrin.h:
-
-/usr/lib/gcc/x86_64-linux-gnu/11/include/xmmintrin.h:
-
-/usr/lib/gcc/x86_64-linux-gnu/11/include/emmintrin.h:
 
 /usr/include/glm/ext/vector_uint1.hpp:
 
@@ -489,8 +476,6 @@ CMakeFiles/OpenGL_Project.dir/main.cpp.o: ../main.cpp \
 /usr/include/glm/ext/quaternion_geometric.inl:
 
 /usr/include/glm/gtc/type_ptr.hpp:
-
-../include/stb_image.h:
 
 /usr/include/glm/ext/matrix_transform.hpp:
 
@@ -656,8 +641,6 @@ CMakeFiles/OpenGL_Project.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/glm/vec3.hpp:
 
-/usr/include/c++/11/math.h:
-
 /usr/include/glm/ext/vector_uint2.hpp:
 
 /usr/include/glm/ext/vector_int2_sized.hpp:
@@ -673,8 +656,6 @@ CMakeFiles/OpenGL_Project.dir/main.cpp.o: ../main.cpp \
 /usr/include/glm/ext/vector_uint1_sized.hpp:
 
 /usr/include/glm/ext/vector_float2.hpp:
-
-/usr/include/c++/11/stdlib.h:
 
 /usr/include/glm/ext/vector_bool2_precision.hpp:
 
@@ -1161,8 +1142,6 @@ CMakeFiles/OpenGL_Project.dir/main.cpp.o: ../main.cpp \
 /usr/include/c++/11/bits/node_handle.h:
 
 /usr/include/x86_64-linux-gnu/bits/fp-fast.h:
-
-/usr/lib/gcc/x86_64-linux-gnu/11/include/mm_malloc.h:
 
 /usr/include/c++/11/system_error:
 

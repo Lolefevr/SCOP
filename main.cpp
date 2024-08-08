@@ -1,121 +1,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Structures pour stocker les données de l'objet
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
-std::vector<unsigned int> indices;
-
-// Variables globales pour la taille de la fenêtre
-int windowWidth = 800;
-int windowHeight = 600;
-
-// Fonction pour charger un fichier .obj
-void loadOBJ(const std::string& path) {
-    std::ifstream objFile(path);
-    if (!objFile.is_open()) {
-        std::cerr << "Failed to open .obj file: " << path << std::endl;
-        return;
-    }
-
-    std::string line;
-    while (std::getline(objFile, line)) {
-        std::istringstream iss(line);
-        std::string prefix;
-        iss >> prefix;
-
-        if (prefix == "v") {
-            glm::vec3 vertex;
-            iss >> vertex.x >> vertex.y >> vertex.z;
-            vertices.push_back(vertex);
-        } else if (prefix == "vn") {
-            glm::vec3 normal;
-            iss >> normal.x >> normal.y >> normal.z;
-            normals.push_back(normal);
-        } else if (prefix == "f") {
-            std::vector<unsigned int> vertexIndices, normalIndices;
-            std::string vertexData;
-            while (iss >> vertexData) {
-                std::replace(vertexData.begin(), vertexData.end(), '/', ' ');
-                std::istringstream viss(vertexData);
-                unsigned int vertexIndex, normalIndex;
-                viss >> vertexIndex;
-                vertexIndices.push_back(vertexIndex - 1);
-                if (viss.peek() == ' ') viss.ignore();
-                if (viss >> normalIndex) {
-                    normalIndices.push_back(normalIndex - 1);
-                }
-            }
-            for (size_t i = 1; i < vertexIndices.size() - 1; ++i) {
-                indices.push_back(vertexIndices[0]);
-                indices.push_back(vertexIndices[i]);
-                indices.push_back(vertexIndices[i + 1]);
-            }
-        }
-    }
-
-    // Afficher les sommets et les indices pour débogage
-    std::cout << "Vertices: " << std::endl;
-    for (const auto& vertex : vertices) {
-        std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
-    }
-
-    std::cout << "Indices: " << std::endl;
-    for (size_t i = 0; i < indices.size(); i += 3) {
-        std::cout << indices[i] << " " << indices[i+1] << " " << indices[i+2] << std::endl;
-    }
-}
-
-const char* vertexShaderSource = R"glsl(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
-)glsl";
-
-const char* fragmentShaderSource = R"glsl(
-#version 330 core
-out vec4 FragColor;
-
-void main() {
-    FragColor = vec4(1.0, 1.0, 1.0, 1.0); // Couleur blanche
-}
-)glsl";
-
-glm::vec3 calculateCentroid(const std::vector<glm::vec3>& vertices) {
-    glm::vec3 centroid(0.0f, 0.0f, 0.0f);
-    for (const auto& vertex : vertices) {
-        centroid += vertex;
-    }
-    centroid /= static_cast<float>(vertices.size());
-    return centroid;
-}
-
-void centerVertices(std::vector<glm::vec3>& vertices, const glm::vec3& centroid) {
-    for (auto& vertex : vertices) {
-        vertex -= centroid;
-    }
-}
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-    windowWidth = width;
-    windowHeight = height;
-}
+#include "obj_loader.h"
+#include "shaders.h"
+#include "utils.h"
 
 int main() {
     if (!glfwInit()) {
@@ -151,10 +43,11 @@ int main() {
     centerVertices(vertices, centroid);
 
     // Créer les VBO et VAO
-    GLuint VBO, VAO, EBO;
+    GLuint VBO, VAO, EBO, colorVBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
+    glGenBuffers(1, &colorVBO);
 
     glBindVertexArray(VAO);
 
@@ -163,6 +56,12 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glEnableVertexAttribArray(0);
+
+    // VBO pour les couleurs
+    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(1);
 
     // EBO pour les indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -216,8 +115,14 @@ int main() {
 
     // Boucle de rendu
     while (!glfwWindowShouldClose(window)) {
-        // Activer le mode fil de fer
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        processInput(window);
+
+        // Activer ou désactiver le mode fil de fer
+        if (showColors) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Mode remplissage
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Mode fil de fer
+        }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -252,6 +157,7 @@ int main() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &colorVBO);
 
     glfwDestroyWindow(window);
     glfwTerminate();
