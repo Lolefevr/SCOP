@@ -128,11 +128,7 @@ int main() {
         processInput(window, deltaTime);
 
         // Activer ou désactiver le mode fil de fer
-        if (showColors) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Mode remplissage
-        } else {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Mode fil de fer
-        }
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -150,10 +146,12 @@ int main() {
         GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+        GLuint useColorLoc = glGetUniformLocation(shaderProgram, "useColor");
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniform1i(useColorLoc, showColors);
 
         // Activer le VAO et dessiner l'objet
         glBindVertexArray(VAO);
