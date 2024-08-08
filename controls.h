@@ -6,6 +6,8 @@
 
 // Variables globales pour la position de l'objet
 extern glm::vec3 objectPosition;
+extern bool showColors;
+extern bool transitioning; // Déclaration de la variable extern
 
 void processInput(GLFWwindow* window, float deltaTime);
 

@@ -7,6 +7,7 @@
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec3> normals;
 std::vector<unsigned int> indices;
+std::vector<glm::vec2> texCoords;
 std::vector<glm::vec3> colors;
 
 void loadOBJ(const std::string& path) {
@@ -31,15 +32,23 @@ void loadOBJ(const std::string& path) {
             glm::vec3 normal;
             iss >> normal.x >> normal.y >> normal.z;
             normals.push_back(normal);
+        } else if (prefix == "vt") {
+            glm::vec2 texCoord;
+            iss >> texCoord.x >> texCoord.y;
+            texCoords.push_back(texCoord);
         } else if (prefix == "f") {
-            std::vector<unsigned int> vertexIndices, normalIndices;
+            std::vector<unsigned int> vertexIndices, normalIndices, texCoordIndices;
             std::string vertexData;
             while (iss >> vertexData) {
                 std::replace(vertexData.begin(), vertexData.end(), '/', ' ');
                 std::istringstream viss(vertexData);
-                unsigned int vertexIndex, normalIndex;
+                unsigned int vertexIndex, normalIndex, texCoordIndex;
                 viss >> vertexIndex;
                 vertexIndices.push_back(vertexIndex - 1);
+                if (viss.peek() == ' ') viss.ignore();
+                if (viss >> texCoordIndex) {
+                    texCoordIndices.push_back(texCoordIndex - 1);
+                }
                 if (viss.peek() == ' ') viss.ignore();
                 if (viss >> normalIndex) {
                     normalIndices.push_back(normalIndex - 1);

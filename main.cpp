@@ -9,6 +9,34 @@
 #include "shaders.h"
 #include "utils.h"
 #include "controls.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+float mixValue = 0.0f; // Initialiser à 0.0 pour le mode fil de fer blanc par défaut
+float transitionSpeed = 1.0f; // Vitesse de transition
+
+extern bool transitioning; // Utilisation de la variable extern
+extern bool showColors; // Utilisation de la variable extern
+
+void loadTexture(const char* path, GLuint& textureID) {
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cerr << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+}
 
 int main() {
     if (!glfwInit()) {
@@ -43,12 +71,17 @@ int main() {
     glm::vec3 centroid = calculateCentroid(vertices);
     centerVertices(vertices, centroid);
 
+    // Charger la texture
+    GLuint textureID;
+    loadTexture("/home/jsoulet/SCOP/SCOP/textures/texture.jpg", textureID);
+
     // Créer les VBO et VAO
-    GLuint VBO, VAO, EBO, colorVBO;
+    GLuint VBO, VAO, EBO, colorVBO, texVBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     glGenBuffers(1, &colorVBO);
+    glGenBuffers(1, &texVBO);
 
     glBindVertexArray(VAO);
 
@@ -63,6 +96,12 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glEnableVertexAttribArray(1);
+
+    // VBO pour les coordonnées de texture
+    glBindBuffer(GL_ARRAY_BUFFER, texVBO);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+    glEnableVertexAttribArray(2);
 
     // EBO pour les indices
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -128,7 +167,11 @@ int main() {
         processInput(window, deltaTime);
 
         // Activer ou désactiver le mode fil de fer
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (mixValue == 0.0f) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Fil de fer
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Rempli
+        }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -146,12 +189,14 @@ int main() {
         GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-        GLuint useColorLoc = glGetUniformLocation(shaderProgram, "useColor");
+        GLuint mixValueLoc = glGetUniformLocation(shaderProgram, "mixValue");
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform1i(useColorLoc, showColors);
+        glUniform1f(mixValueLoc, mixValue);
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
 
         // Activer le VAO et dessiner l'objet
         glBindVertexArray(VAO);
@@ -160,6 +205,23 @@ int main() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        // Gestion de la transition douce
+        if (transitioning) {
+            if (showColors) {
+                mixValue += transitionSpeed * deltaTime;
+                if (mixValue >= 1.0f) {
+                    mixValue = 1.0f;
+                    transitioning = false;
+                }
+            } else {
+                mixValue -= transitionSpeed * deltaTime;
+                if (mixValue <= 0.0f) {
+                    mixValue = 0.0f;
+                    transitioning = false;
+                }
+            }
+        }
     }
 
     // Nettoyage
@@ -167,6 +229,7 @@ int main() {
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
     glDeleteBuffers(1, &colorVBO);
+    glDeleteBuffers(1, &texVBO);
 
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -8,6 +8,7 @@
 extern std::vector<glm::vec3> vertices;
 extern std::vector<glm::vec3> normals;
 extern std::vector<unsigned int> indices;
+extern std::vector<glm::vec2> texCoords;
 extern std::vector<glm::vec3> colors;
 
 void loadOBJ(const std::string& path);
