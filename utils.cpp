@@ -11,8 +11,3 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     windowWidth = width;
     windowHeight = height;
 }
-
-void processInput(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) // Touche pour basculer entre couleur et fil de fer blanc
-        showColors = !showColors;
-}

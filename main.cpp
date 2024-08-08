@@ -8,6 +8,7 @@
 #include "obj_loader.h"
 #include "shaders.h"
 #include "utils.h"
+#include "controls.h"
 
 int main() {
     if (!glfwInit()) {
@@ -113,9 +114,18 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    // Variables pour le chronométrage
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
+
     // Boucle de rendu
     while (!glfwWindowShouldClose(window)) {
-        processInput(window);
+        // Calculer le temps écoulé entre les images
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        processInput(window, deltaTime);
 
         // Activer ou désactiver le mode fil de fer
         if (showColors) {
@@ -131,6 +141,7 @@ int main() {
 
         // Configurer les matrices de transformation
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, objectPosition); // Déplacement de l'objet
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));  // Rotation
 
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
