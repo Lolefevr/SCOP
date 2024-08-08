@@ -1,25 +1,8 @@
 # Dossiers de build et de compilation
 /build/
-bin/
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.dylib
-*.out
-*.a
-*.lib
-*.exp
-*.pdb
-*.idb
 
-# Fichiers générés par CMake
-/CMakeFiles/
-/CMakeCache.txt
-/cmake_install.cmake
-/Makefile
-/install_manifest.txt
+# Fichiers texte
+*.txt
 
 # Logs et fichiers temporaires
 *.log
@@ -46,7 +29,6 @@ bin/
 *.png
 *.bmp
 *.tga
-*.obj
 
 # Fichiers de documentation générés
 /docs/
@@ -65,5 +47,3 @@ bin/
 *.save
 *.sublime-workspace
 
-# Exclusions supplémentaires spécifiques aux systèmes Unix
-*~
