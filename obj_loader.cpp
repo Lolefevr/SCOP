@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec3> normals;
@@ -32,32 +33,37 @@ void loadOBJ(const std::string& path) {
             glm::vec3 normal;
             iss >> normal.x >> normal.y >> normal.z;
             normals.push_back(normal);
-        } else if (prefix == "vt") {
-            glm::vec2 texCoord;
-            iss >> texCoord.x >> texCoord.y;
-            texCoords.push_back(texCoord);
         } else if (prefix == "f") {
-            std::vector<unsigned int> vertexIndices, normalIndices, texCoordIndices;
+            std::vector<unsigned int> vertexIndices;
             std::string vertexData;
             while (iss >> vertexData) {
                 std::replace(vertexData.begin(), vertexData.end(), '/', ' ');
                 std::istringstream viss(vertexData);
-                unsigned int vertexIndex, normalIndex, texCoordIndex;
+                unsigned int vertexIndex;
                 viss >> vertexIndex;
                 vertexIndices.push_back(vertexIndex - 1);
-                if (viss.peek() == ' ') viss.ignore();
-                if (viss >> texCoordIndex) {
-                    texCoordIndices.push_back(texCoordIndex - 1);
-                }
-                if (viss.peek() == ' ') viss.ignore();
-                if (viss >> normalIndex) {
-                    normalIndices.push_back(normalIndex - 1);
-                }
             }
             for (size_t i = 1; i < vertexIndices.size() - 1; ++i) {
                 indices.push_back(vertexIndices[0]);
                 indices.push_back(vertexIndices[i]);
                 indices.push_back(vertexIndices[i + 1]);
+
+                // Calculer les coordonnées de texture en fonction de la taille des faces
+                glm::vec3 v0 = vertices[vertexIndices[0]];
+                glm::vec3 v1 = vertices[vertexIndices[i]];
+                glm::vec3 v2 = vertices[vertexIndices[i + 1]];
+
+                float edgeLength1 = glm::distance(v0, v1);
+                float edgeLength2 = glm::distance(v1, v2);
+                float edgeLength3 = glm::distance(v2, v0);
+
+                // Ajuster les coordonnées UV pour répéter la texture sans étirer
+                float maxEdgeLength = std::max({edgeLength1, edgeLength2, edgeLength3});
+                float uvScale = 1.0f / maxEdgeLength; // Ajuster l'échelle pour la répétition
+
+                texCoords.push_back(glm::vec2(0.0f, 0.0f));
+                texCoords.push_back(glm::vec2(edgeLength1 * uvScale, 0.0f));
+                texCoords.push_back(glm::vec2(0.0f, edgeLength2 * uvScale));
             }
         }
     }

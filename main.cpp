@@ -10,10 +10,11 @@
 #include "utils.h"
 #include "controls.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include </home/jsoulet/SCOP/SCOP/include/stb_image.h>
 
-float mixValue = 0.0f; // Initialiser à 0.0 pour le mode fil de fer blanc par défaut
-float transitionSpeed = 1.0f; // Vitesse de transition
+float mixValue = 0.0f; // Départ en mode fil de fer
+float transitionSpeed = 0.5f; // Vitesse de transition ajustée
+int state = 0; // 0: wireframe, 1: colored faces, 2: textured faces
 
 extern bool transitioning; // Utilisation de la variable extern
 extern bool showColors; // Utilisation de la variable extern
@@ -24,13 +25,14 @@ void loadTexture(const char* path, GLuint& textureID) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     int width, height, nrChannels;
     unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        GLenum format = nrChannels == 4 ? GL_RGBA : GL_RGB;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cerr << "Failed to load texture" << std::endl;
@@ -60,6 +62,10 @@ int main() {
 
     // Activer le test de profondeur
     glEnable(GL_DEPTH_TEST);
+
+    // Activer le blending pour les textures avec alpha
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Définir la fonction de rappel pour le redimensionnement de la fenêtre
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -147,7 +153,7 @@ int main() {
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
         std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
+	}
 
     // Supprimer les shaders compilés, car ils sont maintenant liés dans le programme
     glDeleteShader(vertexShader);
@@ -166,8 +172,8 @@ int main() {
 
         processInput(window, deltaTime);
 
-        // Activer ou désactiver le mode fil de fer
-        if (mixValue == 0.0f) {
+        // Activer ou désactiver le mode fil de fer en fonction de l'état
+        if (state == 0) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Fil de fer
         } else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Rempli
@@ -190,11 +196,13 @@ int main() {
         GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
         GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
         GLuint mixValueLoc = glGetUniformLocation(shaderProgram, "mixValue");
+        GLuint stateLoc = glGetUniformLocation(shaderProgram, "state");
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
         glUniform1f(mixValueLoc, mixValue);
+        glUniform1i(stateLoc, state);
 
         glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -212,13 +220,19 @@ int main() {
                 mixValue += transitionSpeed * deltaTime;
                 if (mixValue >= 1.0f) {
                     mixValue = 1.0f;
+                    state = 2; // Passer à l'état texturé
                     transitioning = false;
+                } else if (state == 0 && mixValue > 0.0f) {
+                    state = 1; // Passer à l'état faces colorées
                 }
             } else {
                 mixValue -= transitionSpeed * deltaTime;
                 if (mixValue <= 0.0f) {
                     mixValue = 0.0f;
+                    state = 0; // Revenir à l'état fil de fer
                     transitioning = false;
+                } else if (state == 2 && mixValue < 1.0f) {
+                    state = 1; // Revenir à l'état faces colorées
                 }
             }
         }

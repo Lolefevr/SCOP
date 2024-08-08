@@ -29,10 +29,18 @@ in vec2 TexCoord;
 
 uniform sampler2D texture1;
 uniform float mixValue;
+uniform int state; // 0: wireframe, 1: colored faces, 2: textured faces
 
 void main() {
     vec4 texColor = texture(texture1, TexCoord);
     vec4 color = vec4(ourColor, 1.0);
-    FragColor = mix(color, texColor, mixValue);
+
+    if (state == 0) {
+        FragColor = vec4(ourColor, 1.0); // Fil de fer coloré
+    } else if (state == 1) {
+        FragColor = mix(vec4(ourColor, 1.0), texColor, mixValue); // Transition douce vers la texture
+    } else {
+        FragColor = mix(color, texColor, mixValue); // Faces texturées
+    }
 }
 )glsl";
