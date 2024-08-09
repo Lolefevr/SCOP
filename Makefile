@@ -28,6 +28,7 @@ clean:
 
 fclean: clean
 	rm -rf $(TARGET)
+	rm -f *.zone.identifier
 
 re: fclean all
 
