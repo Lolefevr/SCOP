@@ -1,3 +1,0 @@
-/home/zhakhann/lolefevr/SCOP/build/CMakeFiles/OpenGL_Project.dir
-/home/zhakhann/lolefevr/SCOP/build/CMakeFiles/edit_cache.dir
-/home/zhakhann/lolefevr/SCOP/build/CMakeFiles/rebuild_cache.dir

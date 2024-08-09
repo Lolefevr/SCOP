@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/OpenGL_Project.dir/src/main.cpp.o CMakeFiles/OpenGL_Project.dir/src/shader.cpp.o -o OpenGL_Project  -lGL -lGLEW -lglfw 
