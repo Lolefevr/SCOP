@@ -71,7 +71,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // Charger l'objet .obj
-    loadOBJ("/home/jsoulet/SCOP/SCOP/42.obj");
+    loadOBJ("42.obj");
 
     // Calculer et centrer les sommets de l'objet
     glm::vec3 centroid = calculateCentroid(vertices);
@@ -79,7 +79,7 @@ int main() {
 
     // Charger la texture
     GLuint textureID;
-    loadTexture("/home/jsoulet/SCOP/SCOP/textures/texture.jpg", textureID);
+    loadTexture("./textures/texture.jpg", textureID);
 
     // Créer les VBO et VAO
     GLuint VBO, VAO, EBO, colorVBO, texVBO;

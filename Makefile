@@ -2,7 +2,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
 LIBS = -lGL -lGLEW -lglfw
-INCLUDES = -I/home/jsoulet/SCOP/SCOP/include
+INCLUDES = -I./include
 SRC_DIR = .
 OBJ_DIR = obj
 TARGET = OpenGL_Project
@@ -24,6 +24,11 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf $(OBJ_DIR)
 
-.PHONY: all clean
+fclean: clean
+	rm -rf $(TARGET)
+
+re: fclean all
+
+.PHONY: all clean fclean re
