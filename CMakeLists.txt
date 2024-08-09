@@ -3,14 +3,13 @@ project(OpenGL_Project)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(GLM_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/glm")
+include_directories(${GLM_INCLUDE_DIR})
+include_directories("/usr/include/GLFW")
+link_directories("/usr/lib/x86_64-linux-gnu")
+
 find_package(OpenGL REQUIRED)
 
-include_directories(/usr/include/GL)
-include_directories(/usr/include/GLFW)
-include_directories(/usr/include/glm)
-
-link_directories(/usr/lib/x86_64-linux-gnu)
-
-add_executable(OpenGL_Project main.cpp)
+add_executable(OpenGL_Project src/main.cpp src/shader.cpp)
 
 target_link_libraries(OpenGL_Project GL GLEW glfw)

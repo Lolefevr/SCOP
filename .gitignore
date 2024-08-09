@@ -1,69 +1,31 @@
-# Dossiers de build et de compilation
-/build/
-bin/
-*.o
-*.obj
-*.exe
+Ignorer les fichiers binaires et de compilation
+/bin/
+/*.o
+/OpenGL_Project
+
+Ignorer les fichiers et dossiers de configuration de l'éditeur
+.vscode/
+.idea/
+
+Ignorer les fichiers spécifiques aux systèmes d'exploitation
+.DS_Store
+*.log
+*.zone.identifier
+*.Zone.Identifier
+
+Ignorer les fichiers générés par le système ou les éditeurs
+*.obj:Zone.Identifier
+*.jpg:Zone.Identifier
+.obj/.Zone.Identifier
+
+Ignorer les fichiers de bibliothèque compilés
+*.lib
 *.dll
 *.so
 *.dylib
-*.out
-*.a
-*.lib
-*.exp
-*.pdb
-*.idb
 
-# Fichiers générés par CMake
-/CMakeFiles/
-/CMakeCache.txt
-/cmake_install.cmake
-/Makefile
-/install_manifest.txt
-
-# Logs et fichiers temporaires
-*.log
-*.tmp
-*.temp
-*.bak
-*.swp
-*.swo
-*.DS_Store
-
-# Configuration de l'IDE
-/.vscode/
-/.idea/
-/*.code-workspace
-
-# Dépendances externes et bibliothèques tierces
-/deps/
-/vendor/
-
-# Images de textures et modèles 3D
-/textures/
-/models/
-*.jpg
-*.png
-*.bmp
-*.tga
-*.obj
-
-# Fichiers de documentation générés
-/docs/
-
-# Fichiers spécifiques à l'utilisateur et de configuration
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-# Caches et fichiers de sauvegarde divers
-*.cache
-*.bak
-*.old
-*.orig
-*.save
-*.sublime-workspace
-
-# Exclusions supplémentaires spécifiques aux systèmes Unix
-*~
+Ignorer les fichiers de configuration de CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
