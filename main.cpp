@@ -14,7 +14,7 @@
 
 float mixValue = 0.0f; // Départ en mode fil de fer
 float transitionSpeed = 0.5f; // Vitesse de transition ajustée
-int state = 0; // 0: wireframe, 1: colored faces, 2: textured faces
+int state = 0; // 0: wireframe, 1: colored faces, 3: textured faces
 
 extern bool transitioning; // Utilisation de la variable extern
 extern bool showColors; // Utilisation de la variable extern
@@ -116,7 +116,7 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    // Compiler le vertex shader
+    // Charger et compiler les shaders
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
     glCompileShader(vertexShader);
@@ -130,7 +130,6 @@ int main() {
         std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // Compiler le fragment shader
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
     glCompileShader(fragmentShader);
@@ -142,7 +141,6 @@ int main() {
         std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // Lier les shaders dans un programme
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
@@ -155,7 +153,6 @@ int main() {
         std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
 	}
 
-    // Supprimer les shaders compilés, car ils sont maintenant liés dans le programme
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -163,16 +160,20 @@ int main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
+    // Positions de la lumière et de la caméra pour le shader figurine
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 viewPos(0.0f, 0.0f, 3.0f);
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
+
     // Boucle de rendu
     while (!glfwWindowShouldClose(window)) {
-        // Calculer le temps écoulé entre les images
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         processInput(window, deltaTime);
 
-        // Activer ou désactiver le mode fil de fer en fonction de l'état
         if (state == 0) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Fil de fer
         } else {
@@ -181,13 +182,11 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Utiliser le programme shader
         glUseProgram(shaderProgram);
 
-        // Configurer les matrices de transformation
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, objectPosition); // Déplacement de l'objet
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));  // Rotation
+        model = glm::translate(model, objectPosition);
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
@@ -204,9 +203,21 @@ int main() {
         glUniform1f(mixValueLoc, mixValue);
         glUniform1i(stateLoc, state);
 
+        // Passer les uniformes supplémentaires pour l'effet figurine
+        if (state == 2) {
+            GLuint lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
+            GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+            GLuint lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
+            GLuint objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
+
+            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
+            glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
+            glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+            glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
+        }
+
         glBindTexture(GL_TEXTURE_2D, textureID);
 
-        // Activer le VAO et dessiner l'objet
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -214,31 +225,35 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        // Gestion de la transition douce
-        if (transitioning) {
-            if (showColors) {
-                mixValue += transitionSpeed * deltaTime;
-                if (mixValue >= 1.0f) {
-                    mixValue = 1.0f;
-                    state = 2; // Passer à l'état texturé
-                    transitioning = false;
-                } else if (state == 0 && mixValue > 0.0f) {
-                    state = 1; // Passer à l'état faces colorées
-                }
+// Gestion de la transition douce
+if (transitioning) {
+    if (showColors) {
+        mixValue += transitionSpeed * deltaTime;
+        if (mixValue >= 1.0f) {
+            mixValue = 1.0f;
+            if (state == 1) {
+                state = 2; // Passer à l'état texturé
+                transitioning = false;
             } else {
-                mixValue -= transitionSpeed * deltaTime;
-                if (mixValue <= 0.0f) {
-                    mixValue = 0.0f;
-                    state = 0; // Revenir à l'état fil de fer
-                    transitioning = false;
-                } else if (state == 2 && mixValue < 1.0f) {
-                    state = 1; // Revenir à l'état faces colorées
-                }
+                state++;
             }
+        } else if (state == 0 && mixValue > 0.0f) {
+            state = 1; // Passer à l'état faces colorées
+        }
+    } else {
+        mixValue -= transitionSpeed * deltaTime;
+        if (mixValue <= 0.0f) {
+            mixValue = 0.0f;
+            state = 0; // Revenir à l'état fil de fer
+            transitioning = false;
+        } else if (state == 2 && mixValue < 1.0f) {
+            state = 1; // Revenir à l'état faces colorées
         }
     }
+}
 
-    // Nettoyage
+    }
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);

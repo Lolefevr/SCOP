@@ -39,7 +39,7 @@ void main() {
         FragColor = vec4(ourColor, 1.0); // Fil de fer coloré
     } else if (state == 1) {
         FragColor = mix(vec4(ourColor, 1.0), texColor, mixValue); // Transition douce vers la texture
-    } else {
+    } else if (state == 2) {
         FragColor = mix(color, texColor, mixValue); // Faces texturées
     }
 }

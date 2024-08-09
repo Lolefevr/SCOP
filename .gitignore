@@ -1,0 +1,37 @@
+# Ignorer les fichiers binaires et de compilation
+/bin/
+/build/
+/*.o
+/OpenGL_Project
+
+# Ignorer les fichiers et dossiers de configuration de l'éditeur
+.vscode/
+.idea/
+
+# Ignorer les fichiers spécifiques aux systèmes d'exploitation
+.DS_Store
+*.log
+*.zone.identifier
+*.Zone.Identifier
+
+# Ignorer les fichiers générés par le système ou les éditeurs
+*.obj:Zone.Identifier
+*.jpg:Zone.Identifier
+*.obj/*.Zone.Identifier
+
+# Ignorer les fichiers de bibliothèque compilés
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Ignorer les fichiers de configuration de CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+
+
+

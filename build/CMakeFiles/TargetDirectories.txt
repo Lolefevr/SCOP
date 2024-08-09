@@ -1,3 +1,0 @@
-/home/jsoulet/SCOP/SCOP/build/CMakeFiles/OpenGL_Project.dir
-/home/jsoulet/SCOP/SCOP/build/CMakeFiles/edit_cache.dir
-/home/jsoulet/SCOP/SCOP/build/CMakeFiles/rebuild_cache.dir
