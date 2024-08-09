@@ -10,7 +10,7 @@
 #include "utils.h"
 #include "controls.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include </home/jsoulet/SCOP/SCOP/include/stb_image.h>
+#include "./include/stb_image.h"
 
 float mixValue = 0.0f; // Départ en mode fil de fer
 float transitionSpeed = 0.5f; // Vitesse de transition ajustée
