@@ -10,4 +10,4 @@ extern bool showColors;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-#endif // UTILS_H
+#endif  // UTILS_H

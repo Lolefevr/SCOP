@@ -4,4 +4,4 @@
 extern const char* vertexShaderSource;
 extern const char* fragmentShaderSource;
 
-#endif // SHADERS_H
+#endif  // SHADERS_H
