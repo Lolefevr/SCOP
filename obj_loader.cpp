@@ -6,11 +6,11 @@
 #include <iostream>
 #include <sstream>
 
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
+std::vector<float> vertices;
+std::vector<float> normals;
 std::vector<unsigned int> indices;
-std::vector<glm::vec2> texCoords;
-std::vector<glm::vec3> colors;
+std::vector<float> texCoords;
+std::vector<float> colors;
 
 void loadOBJ(const std::string& path) {
   std::ifstream objFile(path);
@@ -26,16 +26,17 @@ void loadOBJ(const std::string& path) {
     iss >> prefix;
 
     if (prefix == "v") {
-      glm::vec3 vertex;
-      iss >> vertex.x >> vertex.y >> vertex.z;
-      vertices.push_back(vertex);
-      colors.push_back(glm::vec3(
-          (rand() % 100) / 100.0f, (rand() % 100) / 100.0f,
-          (rand() % 100) / 100.0f));  // Couleur aléatoire pour chaque sommet
+      float vertex[3];
+      iss >> vertex[0] >> vertex[1] >> vertex[2];
+      vertices.insert(vertices.end(), std::begin(vertex), std::end(vertex));
+
+      float color[3] = {(rand() % 100) / 100.0f, (rand() % 100) / 100.0f,
+                        (rand() % 100) / 100.0f};
+      colors.insert(colors.end(), std::begin(color), std::end(color));
     } else if (prefix == "vn") {
-      glm::vec3 normal;
-      iss >> normal.x >> normal.y >> normal.z;
-      normals.push_back(normal);
+      float normal[3];
+      iss >> normal[0] >> normal[1] >> normal[2];
+      normals.insert(normals.end(), std::begin(normal), std::end(normal));
     } else if (prefix == "f") {
       std::vector<unsigned int> vertexIndices;
       std::string vertexData;
@@ -51,24 +52,35 @@ void loadOBJ(const std::string& path) {
         indices.push_back(vertexIndices[i]);
         indices.push_back(vertexIndices[i + 1]);
 
-        // Calculer les coordonnées de texture en fonction de la taille des
-        // faces
-        glm::vec3 v0 = vertices[vertexIndices[0]];
-        glm::vec3 v1 = vertices[vertexIndices[i]];
-        glm::vec3 v2 = vertices[vertexIndices[i + 1]];
+        float v0[3] = {vertices[vertexIndices[0] * 3],
+                       vertices[vertexIndices[0] * 3 + 1],
+                       vertices[vertexIndices[0] * 3 + 2]};
+        float v1[3] = {vertices[vertexIndices[i] * 3],
+                       vertices[vertexIndices[i] * 3 + 1],
+                       vertices[vertexIndices[i] * 3 + 2]};
+        float v2[3] = {vertices[vertexIndices[i + 1] * 3],
+                       vertices[vertexIndices[i + 1] * 3 + 1],
+                       vertices[vertexIndices[i + 1] * 3 + 2]};
 
-        float edgeLength1 = glm::distance(v0, v1);
-        float edgeLength2 = glm::distance(v1, v2);
-        float edgeLength3 = glm::distance(v2, v0);
+        float edgeLength1 =
+            std::sqrt(std::pow(v1[0] - v0[0], 2) + std::pow(v1[1] - v0[1], 2) +
+                      std::pow(v1[2] - v0[2], 2));
+        float edgeLength2 =
+            std::sqrt(std::pow(v2[0] - v1[0], 2) + std::pow(v2[1] - v1[1], 2) +
+                      std::pow(v2[2] - v1[2], 2));
+        float edgeLength3 =
+            std::sqrt(std::pow(v2[0] - v0[0], 2) + std::pow(v2[1] - v0[1], 2) +
+                      std::pow(v2[2] - v0[2], 2));
 
-        // Ajuster les coordonnées UV pour répéter la texture sans étirer
         float maxEdgeLength = std::max({edgeLength1, edgeLength2, edgeLength3});
-        float uvScale =
-            1.0f / maxEdgeLength;  // Ajuster l'échelle pour la répétition
+        float uvScale = 1.0f / maxEdgeLength;
 
-        texCoords.push_back(glm::vec2(0.0f, 0.0f));
-        texCoords.push_back(glm::vec2(edgeLength1 * uvScale, 0.0f));
-        texCoords.push_back(glm::vec2(0.0f, edgeLength2 * uvScale));
+        texCoords.push_back(0.0f);
+        texCoords.push_back(0.0f);
+        texCoords.push_back(edgeLength1 * uvScale);
+        texCoords.push_back(0.0f);
+        texCoords.push_back(0.0f);
+        texCoords.push_back(edgeLength2 * uvScale);
       }
     }
   }
@@ -76,18 +88,22 @@ void loadOBJ(const std::string& path) {
   objFile.close();
 }
 
-glm::vec3 calculateCentroid(const std::vector<glm::vec3>& vertices) {
-  glm::vec3 centroid(0.0f, 0.0f, 0.0f);
-  for (const auto& vertex : vertices) {
-    centroid += vertex;
+void calculateCentroid(const std::vector<float>& vertices, float* centroid) {
+  centroid[0] = centroid[1] = centroid[2] = 0.0f;
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    centroid[0] += vertices[i];
+    centroid[1] += vertices[i + 1];
+    centroid[2] += vertices[i + 2];
   }
-  centroid /= static_cast<float>(vertices.size());
-  return centroid;
+  centroid[0] /= (vertices.size() / 3);
+  centroid[1] /= (vertices.size() / 3);
+  centroid[2] /= (vertices.size() / 3);
 }
 
-void centerVertices(std::vector<glm::vec3>& vertices,
-                    const glm::vec3& centroid) {
-  for (auto& vertex : vertices) {
-    vertex -= centroid;
+void centerVertices(std::vector<float>& vertices, const float* centroid) {
+  for (size_t i = 0; i < vertices.size(); i += 3) {
+    vertices[i] -= centroid[0];
+    vertices[i + 1] -= centroid[1];
+    vertices[i + 2] -= centroid[2];
   }
 }

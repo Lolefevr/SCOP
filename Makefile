@@ -1,7 +1,7 @@
 # Variables
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
-LIBS = -lGL -lGLEW -lglfw
+LIBS = -lGL -lglfw
 INCLUDES = -I./include
 SRC_DIR = .
 OBJ_DIR = obj

@@ -1,6 +1,6 @@
 #include "utils.h"
 
-#include <iostream>
+#include <GL/gl.h>
 
 int windowWidth = 800;
 int windowHeight = 600;

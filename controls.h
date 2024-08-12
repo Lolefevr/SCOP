@@ -3,12 +3,9 @@
 
 #include <GLFW/glfw3.h>
 
-#include <glm/glm.hpp>
-
-// Variables globales pour la position de l'objet
-extern glm::vec3 objectPosition;
+extern float objectPosition[3];
 extern bool showColors;
-extern bool transitioning;  // Déclaration de la variable extern
+extern bool transitioning;
 
 void processInput(GLFWwindow* window, float deltaTime);
 

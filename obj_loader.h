@@ -1,19 +1,17 @@
 #ifndef OBJ_LOADER_H
 #define OBJ_LOADER_H
 
-#include <glm/glm.hpp>
 #include <string>
 #include <vector>
 
-extern std::vector<glm::vec3> vertices;
-extern std::vector<glm::vec3> normals;
+extern std::vector<float> vertices;
+extern std::vector<float> normals;
 extern std::vector<unsigned int> indices;
-extern std::vector<glm::vec2> texCoords;
-extern std::vector<glm::vec3> colors;
+extern std::vector<float> texCoords;
+extern std::vector<float> colors;
 
 void loadOBJ(const std::string& path);
-glm::vec3 calculateCentroid(const std::vector<glm::vec3>& vertices);
-void centerVertices(std::vector<glm::vec3>& vertices,
-                    const glm::vec3& centroid);
+void calculateCentroid(const std::vector<float>& vertices, float* centroid);
+void centerVertices(std::vector<float>& vertices, const float* centroid);
 
 #endif  // OBJ_LOADER_H

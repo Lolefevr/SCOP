@@ -1,9 +1,6 @@
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 #include <iostream>
 
 #include "controls.h"
@@ -13,12 +10,41 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "./include/stb_image.h"
 
-float mixValue = 0.0f;         // Départ en mode fil de fer
-float transitionSpeed = 0.5f;  // Vitesse de transition ajustée
-int state = 0;  // 0: wireframe, 1: colored faces, 3: textured faces
+// Déclarations de pointeurs de fonction pour les fonctions OpenGL
+PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
+PFNGLGENBUFFERSPROC glGenBuffers = nullptr;
+PFNGLBINDBUFFERPROC glBindBuffer = nullptr;
+PFNGLBUFFERDATAPROC glBufferData = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
+PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
+PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
+PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
+PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLUNIFORM1IPROC glUniform1i = nullptr;
+PFNGLDELETESHADERPROC glDeleteShader = nullptr;
+PFNGLDELETEBUFFERSPROC glDeleteBuffers = nullptr;
+PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
+PFNGLCREATESHADERPROC glCreateShader = nullptr;
+PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
+PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
+PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
+PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
+PFNGLATTACHSHADERPROC glAttachShader = nullptr;
+PFNGLLINKPROGRAMPROC glLinkProgram = nullptr;
+PFNGLGETPROGRAMIVPROC glGetProgramiv = nullptr;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
+PFNGLGENERATEMIPMAPPROC glGenerateMipmap = nullptr;
+PFNGLUNIFORM3FVPROC glUniform3fv = nullptr;
 
-extern bool transitioning;  // Utilisation de la variable extern
-extern bool showColors;     // Utilisation de la variable extern
+float mixValue = 0.0f;
+float transitionSpeed = 0.5f;
+int state = 0;
+
+extern bool transitioning;
+extern bool showColors;
 
 void loadTexture(const char* path, GLuint& textureID) {
   glGenTextures(1, &textureID);
@@ -43,6 +69,109 @@ void loadTexture(const char* path, GLuint& textureID) {
   stbi_image_free(data);
 }
 
+void identityMatrix(float* matrix) {
+  for (int i = 0; i < 16; ++i) {
+    matrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+  }
+}
+
+void translateMatrix(float* matrix, float x, float y, float z) {
+  identityMatrix(matrix);
+  matrix[12] = x;
+  matrix[13] = y;
+  matrix[14] = z;
+}
+
+void rotateMatrixY(float* matrix, float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  identityMatrix(matrix);
+  matrix[0] = c;
+  matrix[2] = -s;
+  matrix[8] = s;
+  matrix[10] = c;
+}
+
+void multiplyMatrices(float* result, const float* a, const float* b) {
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      result[i * 4 + j] =
+          a[i * 4 + 0] * b[0 * 4 + j] + a[i * 4 + 1] * b[1 * 4 + j] +
+          a[i * 4 + 2] * b[2 * 4 + j] + a[i * 4 + 3] * b[3 * 4 + j];
+    }
+  }
+}
+
+void perspectiveMatrix(float* matrix, float fov, float aspect, float near,
+                       float far) {
+  float tanHalfFov = tan(fov / 2.0f);
+  identityMatrix(matrix);
+  matrix[0] = 1.0f / (aspect * tanHalfFov);
+  matrix[5] = 1.0f / tanHalfFov;
+  matrix[10] = -(far + near) / (far - near);
+  matrix[11] = -1.0f;
+  matrix[14] = -(2.0f * far * near) / (far - near);
+  matrix[15] = 0.0f;
+}
+
+void loadOpenGLFunctions() {
+  glGenVertexArrays =
+      (PFNGLGENVERTEXARRAYSPROC)glfwGetProcAddress("glGenVertexArrays");
+  glGenBuffers = (PFNGLGENBUFFERSPROC)glfwGetProcAddress("glGenBuffers");
+  glBindBuffer = (PFNGLBINDBUFFERPROC)glfwGetProcAddress("glBindBuffer");
+  glBufferData = (PFNGLBUFFERDATAPROC)glfwGetProcAddress("glBufferData");
+  glVertexAttribPointer =
+      (PFNGLVERTEXATTRIBPOINTERPROC)glfwGetProcAddress("glVertexAttribPointer");
+  glEnableVertexAttribArray =
+      (PFNGLENABLEVERTEXATTRIBARRAYPROC)glfwGetProcAddress(
+          "glEnableVertexAttribArray");
+  glBindVertexArray =
+      (PFNGLBINDVERTEXARRAYPROC)glfwGetProcAddress("glBindVertexArray");
+  glUseProgram = (PFNGLUSEPROGRAMPROC)glfwGetProcAddress("glUseProgram");
+  glUniformMatrix4fv =
+      (PFNGLUNIFORMMATRIX4FVPROC)glfwGetProcAddress("glUniformMatrix4fv");
+  glUniform1f = (PFNGLUNIFORM1FPROC)glfwGetProcAddress("glUniform1f");
+  glUniform1i = (PFNGLUNIFORM1IPROC)glfwGetProcAddress("glUniform1i");
+  glDeleteShader = (PFNGLDELETESHADERPROC)glfwGetProcAddress("glDeleteShader");
+  glDeleteBuffers =
+      (PFNGLDELETEBUFFERSPROC)glfwGetProcAddress("glDeleteBuffers");
+  glDeleteVertexArrays =
+      (PFNGLDELETEVERTEXARRAYSPROC)glfwGetProcAddress("glDeleteVertexArrays");
+  glCreateShader = (PFNGLCREATESHADERPROC)glfwGetProcAddress("glCreateShader");
+  glShaderSource = (PFNGLSHADERSOURCEPROC)glfwGetProcAddress("glShaderSource");
+  glCompileShader =
+      (PFNGLCOMPILESHADERPROC)glfwGetProcAddress("glCompileShader");
+  glGetShaderiv = (PFNGLGETSHADERIVPROC)glfwGetProcAddress("glGetShaderiv");
+  glGetShaderInfoLog =
+      (PFNGLGETSHADERINFOLOGPROC)glfwGetProcAddress("glGetShaderInfoLog");
+  glCreateProgram =
+      (PFNGLCREATEPROGRAMPROC)glfwGetProcAddress("glCreateProgram");
+  glAttachShader = (PFNGLATTACHSHADERPROC)glfwGetProcAddress("glAttachShader");
+  glLinkProgram = (PFNGLLINKPROGRAMPROC)glfwGetProcAddress("glLinkProgram");
+  glGetProgramiv = (PFNGLGETPROGRAMIVPROC)glfwGetProcAddress("glGetProgramiv");
+  glGetProgramInfoLog =
+      (PFNGLGETPROGRAMINFOLOGPROC)glfwGetProcAddress("glGetProgramInfoLog");
+  glGetUniformLocation =
+      (PFNGLGETUNIFORMLOCATIONPROC)glfwGetProcAddress("glGetUniformLocation");
+  glGenerateMipmap =
+      (PFNGLGENERATEMIPMAPPROC)glfwGetProcAddress("glGenerateMipmap");
+  glUniform3fv = (PFNGLUNIFORM3FVPROC)glfwGetProcAddress("glUniform3fv");
+
+  if (!glGenVertexArrays || !glGenBuffers || !glBindBuffer || !glBufferData ||
+      !glVertexAttribPointer || !glEnableVertexAttribArray ||
+      !glBindVertexArray || !glUseProgram || !glUniformMatrix4fv ||
+      !glUniform1f || !glUniform1i || !glDeleteShader || !glDeleteBuffers ||
+      !glDeleteVertexArrays || !glCreateShader || !glShaderSource ||
+      !glCompileShader || !glGetShaderiv || !glGetShaderInfoLog ||
+      !glCreateProgram || !glAttachShader || !glLinkProgram ||
+      !glGetProgramiv || !glGetProgramInfoLog || !glGetUniformLocation ||
+      !glGenerateMipmap || !glUniform3fv) {
+    std::cerr << "Failed to load OpenGL functions." << std::endl;
+    glfwTerminate();
+    exit(-1);
+  }
+}
+
 int main() {
   if (!glfwInit()) {
     std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -58,34 +187,22 @@ int main() {
   }
 
   glfwMakeContextCurrent(window);
+  loadOpenGLFunctions();
 
-  if (glewInit() != GLEW_OK) {
-    std::cerr << "Failed to initialize GLEW" << std::endl;
-    return -1;
-  }
-
-  // Activer le test de profondeur
   glEnable(GL_DEPTH_TEST);
-
-  // Activer le blending pour les textures avec alpha
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  // Définir la fonction de rappel pour le redimensionnement de la fenêtre
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-  // Charger l'objet .obj
-  loadOBJ("42.obj");
+  loadOBJ("422.obj");
 
-  // Calculer et centrer les sommets de l'objet
-  glm::vec3 centroid = calculateCentroid(vertices);
+  float centroid[3] = {0.0f, 0.0f, 0.0f};
+  calculateCentroid(vertices, centroid);
   centerVertices(vertices, centroid);
 
-  // Charger la texture
   GLuint textureID;
   loadTexture("./textures/texture.jpg", textureID);
 
-  // Créer les VBO et VAO
   GLuint VBO, VAO, EBO, colorVBO, texVBO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
@@ -95,28 +212,24 @@ int main() {
 
   glBindVertexArray(VAO);
 
-  // VBO pour les sommets
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(float),
                vertices.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
-  // VBO pour les couleurs
   glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-  glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3),
+  glBufferData(GL_ARRAY_BUFFER, colors.size() * 3 * sizeof(float),
                colors.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(1);
 
-  // VBO pour les coordonnées de texture
   glBindBuffer(GL_ARRAY_BUFFER, texVBO);
-  glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2),
+  glBufferData(GL_ARRAY_BUFFER, texCoords.size() * 2 * sizeof(float),
                texCoords.data(), GL_STATIC_DRAW);
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(2);
 
-  // EBO pour les indices
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
                indices.data(), GL_STATIC_DRAW);
@@ -124,12 +237,10 @@ int main() {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 
-  // Charger et compiler les shaders
   GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
   glCompileShader(vertexShader);
 
-  // Vérifier les erreurs de compilation du vertex shader
   int success;
   char infoLog[512];
   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -143,7 +254,6 @@ int main() {
   glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
   glCompileShader(fragmentShader);
 
-  // Vérifier les erreurs de compilation du fragment shader
   glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
@@ -156,7 +266,6 @@ int main() {
   glAttachShader(shaderProgram, fragmentShader);
   glLinkProgram(shaderProgram);
 
-  // Vérifier les erreurs de linkage du programme
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
   if (!success) {
     glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
@@ -167,17 +276,14 @@ int main() {
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
-  // Variables pour le chronométrage
   float deltaTime = 0.0f;
   float lastFrame = 0.0f;
 
-  // Positions de la lumière et de la caméra pour le shader figurine
-  glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-  glm::vec3 viewPos(0.0f, 0.0f, 3.0f);
-  glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-  glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
+  float lightPos[3] = {1.2f, 1.0f, 2.0f};
+  float viewPos[3] = {0.0f, 0.0f, 3.0f};
+  float lightColor[3] = {1.0f, 1.0f, 1.0f};
+  float objectColor[3] = {1.0f, 0.5f, 0.31f};
 
-  // Boucle de rendu
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -186,25 +292,30 @@ int main() {
     processInput(window, deltaTime);
 
     if (state == 0) {
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Fil de fer
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // Rempli
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     glUseProgram(shaderProgram);
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, objectPosition);
-    model =
-        glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    float rotation[16];
+    rotateMatrixY(rotation, glfwGetTime());
 
-    glm::mat4 view =
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
-    glm::mat4 projection = glm::perspective(
-        glm::radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f,
-        100.0f);
+    float translation[16];
+    translateMatrix(translation, objectPosition[0], objectPosition[1],
+                    objectPosition[2]);
+
+    float model[16];
+    multiplyMatrices(model, rotation, translation);
+
+    float view[16];
+    translateMatrix(view, 0.0f, 0.0f, -5.0f);
+
+    float projection[16];
+    perspectiveMatrix(projection, 45.0f * 3.14159265358979f / 180.0f,
+                      (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
 
     GLuint modelLoc = glGetUniformLocation(shaderProgram, "model");
     GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -212,13 +323,12 @@ int main() {
     GLuint mixValueLoc = glGetUniformLocation(shaderProgram, "mixValue");
     GLuint stateLoc = glGetUniformLocation(shaderProgram, "state");
 
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model);
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view);
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection);
     glUniform1f(mixValueLoc, mixValue);
     glUniform1i(stateLoc, state);
 
-    // Passer les uniformes supplémentaires pour l'effet figurine
     if (state == 2) {
       GLuint lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
       GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
@@ -226,14 +336,13 @@ int main() {
       GLuint objectColorLoc =
           glGetUniformLocation(shaderProgram, "objectColor");
 
-      glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
-      glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
-      glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
-      glUniform3fv(objectColorLoc, 1, glm::value_ptr(objectColor));
+      glUniform3fv(lightPosLoc, 1, lightPos);
+      glUniform3fv(viewPosLoc, 1, viewPos);
+      glUniform3fv(lightColorLoc, 1, lightColor);
+      glUniform3fv(objectColorLoc, 1, objectColor);
     }
 
     glBindTexture(GL_TEXTURE_2D, textureID);
-
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -241,29 +350,28 @@ int main() {
     glfwSwapBuffers(window);
     glfwPollEvents();
 
-    // Gestion de la transition douce
     if (transitioning) {
       if (showColors) {
         mixValue += transitionSpeed * deltaTime;
         if (mixValue >= 1.0f) {
           mixValue = 1.0f;
           if (state == 1) {
-            state = 2;  // Passer à l'état texturé
+            state = 2;
             transitioning = false;
           } else {
             state++;
           }
         } else if (state == 0 && mixValue > 0.0f) {
-          state = 1;  // Passer à l'état faces colorées
+          state = 1;
         }
       } else {
         mixValue -= transitionSpeed * deltaTime;
         if (mixValue <= 0.0f) {
           mixValue = 0.0f;
-          state = 0;  // Revenir à l'état fil de fer
+          state = 0;
           transitioning = false;
         } else if (state == 2 && mixValue < 1.0f) {
-          state = 1;  // Revenir à l'état faces colorées
+          state = 1;
         }
       }
     }
