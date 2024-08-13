@@ -1,0 +1,43 @@
+.
+├── CMakeLists.txt
+├── Makefile
+├── OpenGL_Project
+├── include
+│   ├── shader.hpp
+│   └── stb_image.h
+├── main.o
+├── models
+│   ├── 21521_Greek_God_v1_NEW.obj
+│   ├── 42.obj
+│   ├── DNA.obj
+│   ├── Skull_v3_L2.obj
+│   ├── gepard.obj
+│   ├── statue_head.obj
+│   ├── teapot.obj
+│   └── teapot2.obj
+├── obj
+│   ├── main.o
+│   └── shader.o
+├── project-structure.txt
+├── shaders
+│   ├── fragment_shader.glsl
+│   ├── fragment_shader_color.glsl
+│   ├── fragment_shader_flat.glsl
+│   ├── fragment_shader_grayscale.glsl
+│   ├── fragment_shader_phong.glsl
+│   ├── fragment_shader_point.glsl
+│   ├── fragment_shader_texture.glsl
+│   ├── fragment_shader_transition.glsl
+│   ├── vertex_shader.glsl
+│   ├── vertex_shader_color.glsl
+│   ├── vertex_shader_flat.glsl
+│   ├── vertex_shader_texture.glsl
+│   └── vertex_shader_transition.glsl
+├── src
+│   ├── main.cpp
+│   └── shader.cpp
+└── textures
+    ├── cat.jpg
+    └── plate.png
+
+6 directories, 34 files

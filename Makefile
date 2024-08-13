@@ -6,13 +6,12 @@ CC = g++
 CFLAGS = -Wall -Wextra -Werror -std=c++17
 
 # Bibliothèques et flags pour OpenGL
-LDFLAGS = -lGL -lGLEW -lglfw
+LDFLAGS = -lGL -lglfw -lpthread -ldl
 INCLUDES = -Iinclude
 
 # Répertoires
 SRCDIR = src
 OBJDIR = obj
-BINDIR = bin
 
 # Fichiers source
 SRCS = $(wildcard $(SRCDIR)/*.cpp)
@@ -21,12 +20,11 @@ SRCS = $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 # Commandes
-all: $(BINDIR)/$(NAME)
+all: $(NAME)
 
-# Règle pour créer l'exécutable
-$(BINDIR)/$(NAME): $(OBJS)
-	@mkdir -p $(BINDIR)
-	$(CC) $(OBJS) -o $(BINDIR)/$(NAME) $(LDFLAGS)
+# Règle pour créer l'exécutable à la racine
+$(NAME): $(OBJS)
+	$(CC) $(OBJS) -o $(NAME) $(LDFLAGS)
 	@echo "Compilation terminée avec succès : $(NAME)"
 
 # Règle pour compiler les fichiers objets
@@ -42,7 +40,7 @@ clean:
 
 # Nettoyer tout (fichiers objets + exécutable)
 fclean: clean
-	@rm -rf $(BINDIR)
+	@rm -f $(NAME)
 	@echo "Nettoyage complet terminé"
 
 # Recompiler tout
