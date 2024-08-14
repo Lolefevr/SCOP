@@ -1,19 +1,10 @@
 #version 330 core
 
-in vec3 Normal;
-
+flat in int faceID;
 out vec4 FragColor;
 
-uniform vec3 lightPos;
-uniform vec3 lightColor;
-uniform vec3 objectColor;
-
 void main() {
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
-
-    vec3 result = diffuse * objectColor;
-    FragColor = vec4(result, 1.0);
+    // Convertir l'identifiant de la face en une couleur de gris
+    float grayValue = mod(float(faceID) * 0.1, 1.0); // 0.1 peut être ajusté pour changer la variation de gris
+    FragColor = vec4(vec3(grayValue), 1.0);
 }

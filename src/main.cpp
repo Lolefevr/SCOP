@@ -116,8 +116,10 @@ PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
 PFNGLGENERATEMIPMAPPROC glGenerateMipmap = nullptr;
 PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLUNIFORM3FPROC glUniform3f = nullptr;
 
 void loadOpenGLFunctions() {
+	glUniform3f = (PFNGLUNIFORM3FPROC)glfwGetProcAddress("glUniform3f");
 	glUniform1f = (PFNGLUNIFORM1FPROC)glfwGetProcAddress("glUniform1f");
 	glUniform1i = (PFNGLUNIFORM1IPROC)glfwGetProcAddress("glUniform1i");
     glCreateShader = (PFNGLCREATESHADERPROC)glfwGetProcAddress("glCreateShader");
@@ -151,7 +153,7 @@ void loadOpenGLFunctions() {
         !glUniformMatrix4fv || !glDeleteShader || !glDeleteBuffers || !glDeleteVertexArrays ||
         !glShaderSource || !glCompileShader || !glGetShaderiv || !glGetShaderInfoLog ||
         !glCreateProgram || !glAttachShader || !glLinkProgram || !glGetProgramiv ||
-        !glGetProgramInfoLog || !glGenerateMipmap || !glCreateShader || !glDeleteProgram || !glUniform1i || !glUniform1f) {
+        !glGetProgramInfoLog || !glGenerateMipmap || !glCreateShader || !glDeleteProgram || !glUniform1i || !glUniform1f || !glUniform3f) {
         std::cerr << "Failed to load OpenGL functions." << std::endl;
         glfwTerminate();
         exit(-1);
@@ -565,17 +567,17 @@ int main() {
             glUniform1i(textureLoc, 0);
         }
 
-	// 	if (currentShaderProgram == phongShaderProgram) {
-    //     GLint lightPosLoc = glGetUniformLocation(currentShaderProgram, "lightPos");
-    //     GLint viewPosLoc = glGetUniformLocation(currentShaderProgram, "viewPos");
-    //     GLint lightColorLoc = glGetUniformLocation(currentShaderProgram, "lightColor");
-    //     GLint objectColorLoc = glGetUniformLocation(currentShaderProgram, "objectColor");
+		if (currentShaderProgram == phongShaderProgram) {
+        GLint lightPosLoc = glGetUniformLocation(currentShaderProgram, "lightPos");
+        GLint viewPosLoc = glGetUniformLocation(currentShaderProgram, "viewPos");
+        GLint lightColorLoc = glGetUniformLocation(currentShaderProgram, "lightColor");
+        GLint objectColorLoc = glGetUniformLocation(currentShaderProgram, "objectColor");
 
-    //     glUniform3f(lightPosLoc, 1.2f, 1.0f, 2.0f);
-    //     glUniform3f(viewPosLoc, cameraPosition.x, cameraPosition.y, cameraPosition.z);
-    //     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
-    //     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
-    // }
+        glUniform3f(lightPosLoc, 1.2f, 1.0f, 2.0f);
+        glUniform3f(viewPosLoc, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+        glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+        glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f);
+    }
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
