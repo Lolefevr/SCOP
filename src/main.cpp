@@ -462,32 +462,32 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            cameraPosition.y += 0.01f;
+            cameraPosition.y += 0.05f;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            cameraPosition.y -= 0.01f;
+            cameraPosition.y -= 0.05f;
         }
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            cameraPosition.x -= 0.01f;
+            cameraPosition.x -= 0.05f;
         }
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            cameraPosition.x += 0.01f;
+            cameraPosition.x += 0.05f;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-            cameraPosition.z += 0.01f;
+            cameraPosition.z += 0.05f;
         }
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-            cameraPosition.z -= 0.01f;
+            cameraPosition.z -= 0.05f;
         }
 
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-            rotationX += 0.005f;
+            rotationX += 0.015f;
         }
         if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-            rotationX -= 0.005f;
+            rotationX -= 0.015f;
         }
 
-        continuousRotationAngle += 0.001f;
+        continuousRotationAngle += 0.005f;
         Mat4 rotation = Mat4::rotate(continuousRotationAngle, Vec3(0.0f, 1.0f, 0.0f));
 
         model = Mat4::rotate(rotationX, Vec3(1.0f, 0.0f, 0.0f)) *
@@ -531,13 +531,13 @@ int main() {
 
         if (transitioning) {
             if (showingTexture) {
-                mixFactor += 0.001f;
+                mixFactor += 0.005f;
                 if (mixFactor >= 1.0f) {
                     mixFactor = 1.0f;
                     transitioning = false;
                 }
             } else {
-                mixFactor -= 0.001f;
+                mixFactor -= 0.005f;
                 if (mixFactor <= 0.0f) {
                     mixFactor = 0.0f;
                     transitioning = false;
